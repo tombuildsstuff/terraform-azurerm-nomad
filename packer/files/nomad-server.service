@@ -1,0 +1,10 @@
+[Unit]
+Description=Nomad client
+Wants=network-online.target
+After=network-online.target
+[Service]
+ExecStart= /bin/sh -c "/usr/bin/nomad agent -config /etc/nomad/nomad-server.hcl" -bind=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
+Restart=always
+RestartSec=10
+[Install]
+WantedBy=multi-user.target

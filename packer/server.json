@@ -1,0 +1,117 @@
+{
+  "variables": {
+    "client_id": "{{env `ARM_CLIENT_ID`}}",
+    "client_secret": "{{env `ARM_CLIENT_SECRET`}}",
+    "location": "{{env `ARM_TEST_LOCATION`}}",
+    "subscription_id": "{{env `ARM_SUBSCRIPTION_ID`}}",
+    "tenant_id": "{{env `ARM_TENANT_ID`}}",
+
+    "consul_version": "1.4.2",
+    "nomad_version": "0.8.7",
+    "consul_key": "ArDyLpcf6JC61O/IuwfkGw==",
+    "image_suffix": "abc123",
+    "tag_name": "OsloHUG",
+    "tag_value": "2019-02-11"
+  },
+  "builders": [{
+    "type": "azure-arm",
+
+    "client_id": "{{user `client_id`}}",
+    "client_secret": "{{user `client_secret`}}",
+    "location": "{{user `location`}}",
+    "subscription_id": "{{user `subscription_id`}}",
+    "tenant_id": "{{user `tenant_id`}}",
+    "vm_size": "Standard_F2",
+
+    "os_type": "Linux",
+    "image_publisher": "Canonical",
+    "image_offer": "UbuntuServer",
+    "image_sku": "16.04-LTS",
+
+    "managed_image_name": "oslohug-hashistack{{user `image_suffix`}}",
+    "managed_image_resource_group_name": "oslohug-images",
+
+    "azure_tags": {
+      "dept": "engineering",
+      "task": "image deployment"
+    }
+  }],
+  "provisioners": [
+    {
+      "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+      "inline": [
+        "apt-get update",
+        "apt-get upgrade -y",
+        "apt-get install -y unzip"
+      ],
+      "inline_shebang": "/bin/sh -x",
+      "type": "shell"
+    },
+    {
+      "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+      "inline": [
+        "mkdir -p /var/provisioning",
+        "cd /var/provisioning",
+        "mkdir /etc/consul",
+        "mkdir /etc/nomad",
+
+        "wget -O /var/provisioning/consul.zip https://releases.hashicorp.com/consul/{{user `consul_version`}}/consul_{{user `consul_version`}}_linux_amd64.zip",
+        "unzip consul.zip",
+        "chmod +x consul",
+        "mv /var/provisioning/consul /usr/bin/consul",
+
+        "wget -O /var/provisioning/nomad.zip https://releases.hashicorp.com/nomad/{{user `nomad_version`}}/nomad_{{user `nomad_version`}}_linux_amd64.zip",
+        "unzip nomad.zip",
+        "chmod +x nomad",
+        "mv /var/provisioning/nomad /usr/bin/nomad",
+
+        "mkdir -p /var/provisioning/files",
+        "chmod 777 /var/provisioning/files",
+        "mkdir -p /var/consul",
+        "mkdir -p /var/lib/nomad/client",
+        "mkdir -p /var/lib/nomad/server"
+      ],
+      "inline_shebang": "/bin/sh -x",
+      "type": "shell"
+    },
+    {
+      "type": "shell-local",
+      "command": "./scripts/generate.sh",
+      "environment_vars": [
+        "CLIENT_ID={{user `client_id`}}",
+        "CLIENT_SECRET={{user `client_secret`}}",
+        "CONSUL_KEY={{user `consul_key`}}",
+        "LOCATION={{user `location`}}",
+        "TAG_NAME={{user `tag_name`}}",
+        "TAG_VALUE={{user `tag_value`}}",
+        "SUBSCRIPTION_ID={{user `subscription_id`}}",
+        "TENANT_ID={{user `tenant_id`}}"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "files/",
+      "destination": "/var/provisioning/files"
+    },
+    {
+      "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+      "inline": [
+        "mv /var/provisioning/files/consul-server.json /etc/consul/server.json",
+        "mv /var/provisioning/files/nomad-client.hcl /etc/nomad/nomad-client.hcl",
+        "mv /var/provisioning/files/nomad-server.hcl /etc/nomad/nomad-server.hcl",
+
+        "mv /var/provisioning/files/consul.service /etc/systemd/system/consul.service",
+        "mv /var/provisioning/files/nomad-client.service /etc/systemd/system/nomad-client.service",
+        "mv /var/provisioning/files/nomad-server.service /etc/systemd/system/nomad-server.service",
+
+        "systemctl enable consul.service",
+        "systemctl enable nomad-client.service",
+        "systemctl enable nomad-server.service",
+
+        "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+      ],
+      "inline_shebang": "/bin/sh -x",
+      "type": "shell"
+    }
+  ]
+}
