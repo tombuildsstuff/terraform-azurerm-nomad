@@ -1,2 +1,5 @@
 .idea/
+packer/files/consul-server.json
+packer/files/nomad-client.hcl
+packer/files/nomad-server.hcl
 .terraform/
