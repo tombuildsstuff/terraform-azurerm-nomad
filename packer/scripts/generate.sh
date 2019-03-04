@@ -24,12 +24,13 @@ echo '
 
 echo '
 log_level = "DEBUG"
+datacenter = "'$location'"
 data_dir = "/var/lib/nomad/server"
 
 server {
   enabled = true
   bootstrap_expect = 3
-  "retry_join": ["provider=azure tag_name=\"'$tagName'\" tag_value=\"'$tagValue'\" client_id=\"'$clientId'\" subscription_id=\"'$subscriptionId'\" secret_access_key=\"'$secretAccessKey'\" tenant_id=\"'$tenantId'\""]
+  retry_join = ["provider=azure tag_name=\"'$tagName'\" tag_value=\"'$tagValue'\" client_id=\"'$clientId'\" subscription_id=\"'$subscriptionId'\" secret_access_key=\"'$secretAccessKey'\" tenant_id=\"'$tenantId'\""]
 }
 
 ' > files/nomad-server.hcl
@@ -37,6 +38,7 @@ server {
 echo '
 log_level = "DEBUG"
 data_dir = "/var/lib/nomad/client"
+datacenter = "'$location'"
 
 client {
   enabled = true

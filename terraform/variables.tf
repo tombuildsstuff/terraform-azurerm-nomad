@@ -1,9 +1,9 @@
 locals {
-  prefix   = "tomdev99"
+  prefix   = "oslolive"
   username = "tharvey"
   ssh_key  = "${file("~/.ssh/id_rsa.pub")}"
 
   tags = {
-    "HashiStack" = "OsloDev"
+    "OsloHUG" = "2019-02-11"
   }
 }
