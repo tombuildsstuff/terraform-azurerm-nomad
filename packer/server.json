@@ -9,9 +9,9 @@
     "consul_version": "1.4.2",
     "nomad_version": "0.8.7",
     "consul_key": "ArDyLpcf6JC61O/IuwfkGw==",
-    "image_suffix": "oslolive",
-    "tag_name": "OsloHUG",
-    "tag_value": "2019-02-11"
+    "image_suffix": "zurich1",
+    "tag_name": "HashiStack",
+    "tag_value": "Zurich1"
   },
   "builders": [{
     "type": "azure-arm",
@@ -28,8 +28,8 @@
     "image_offer": "UbuntuServer",
     "image_sku": "16.04-LTS",
 
-    "managed_image_name": "oslohug-hashistack{{user `image_suffix`}}",
-    "managed_image_resource_group_name": "oslohug-images",
+    "managed_image_name": "zurichhug-hashistack{{user `image_suffix`}}",
+    "managed_image_resource_group_name": "zurichhug-images",
 
     "azure_tags": {
       "dept": "engineering",
@@ -47,6 +47,18 @@
       "inline_shebang": "/bin/sh -x",
       "type": "shell"
     },
+      {
+        "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+        "inline": [
+          "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -",
+          "sudo add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\"",
+          "apt-get update",
+          "apt-cache policy docker-ce",
+          "apt-get install -y docker-ce"
+        ],
+        "inline_shebang": "/bin/sh -x",
+        "type": "shell"
+      },
     {
       "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
       "inline": [
